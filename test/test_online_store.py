@@ -3,7 +3,8 @@
 """
 import pytest
 
-from models.auxiliary_classes import Product, Cart
+from models.store_products import Product
+from models.user_shopping_cart import Cart
 
 
 @pytest.fixture
@@ -34,12 +35,12 @@ class TestProducts:
 
     def test_product_check_quantity(self, product):
         # TODO напишите проверки на метод check_quantity
-        assert product.check_quantity(
-            500), "Количество запрашиваемого продукта больше существующих объемов"
+        assert product.check_quantity(500)
 
     def test_product_buy(self, product):
         # TODO напишите проверки на метод buy
-        assert product.price * 500 == product.buy(500)
+        product.buy(200)
+        assert 800 == product.quantity
 
     def test_product_buy_more_than_available(self, product):
         # TODO напишите проверки на метод buy,
@@ -58,15 +59,21 @@ class TestCart:
 
     def test_add_product(self, copybook, pen, pencil):
         cart = Cart()
-        assert cart.add_product(copybook, 6) == (copybook.name, 6)
-        assert cart.add_product(copybook, 5) == (copybook.name, 11)
-        assert cart.add_product(pen) == (pen.name, 1)
+        cart.add_product(copybook, 6)
+        assert cart.products[copybook] == 6
+        cart.add_product(copybook, 5)
+        assert cart.products[copybook] == 11
+        cart.add_product(pen)
+        assert cart.products[pen] == 1
 
     def test_negative_add_product(self, copybook, pen, pencil):
         cart = Cart()
 
         with pytest.raises(ValueError):
             assert cart.add_product(copybook, 0) is ValueError
+
+        with pytest.raises(ValueError):
+            assert cart.add_product(copybook, 10001) is ValueError
 
     def test_remove_product(self, copybook, pen, pencil):
         cart = Cart()
@@ -75,10 +82,15 @@ class TestCart:
         cart.add_product(copybook, 5)
         cart.add_product(pencil, 35)
 
-        assert cart.remove_product(copybook, 5) == (copybook.name, 6)
-        assert cart.remove_product(pencil) == 'Продукт полностью удален из корзины'
+        cart.remove_product(copybook, 5)
+        assert cart.products[copybook] == 6
+
+        cart.remove_product(pencil)
+        assert pencil not in cart.products.keys()
+
         cart.add_product(pencil, 10)
-        assert cart.remove_product(pencil, 15) == 'Продукт полностью удален из корзины'
+        cart.remove_product(pencil, 15)
+        assert pencil not in cart.products.keys()
 
         with pytest.raises(AttributeError):
             assert cart.remove_product(pen) is AttributeError
@@ -90,7 +102,9 @@ class TestCart:
         cart.add_product(copybook, 5)
         cart.add_product(pencil, 35)
 
-        assert cart.clear() == ('Корзина очищена', None)
+        cart.clear()
+
+        assert cart.products == {}
 
     def test_get_total_price(self, copybook, pen, pencil):
         cart = Cart()
@@ -101,6 +115,20 @@ class TestCart:
 
         assert cart.get_total_price() == (copybook.price * 500 + pen.price * 800 + pencil.price * 5000)
 
+    def test_negative_total_price(self, copybook, pen, pencil):
+        cart = Cart()
+
+        try:
+            cart.add_product(copybook, 10001)
+        except ValueError:
+            pass
+
+        cart.add_product(pen, 800)
+        cart.add_product(pencil, 5000)
+
+        with pytest.raises(AssertionError):
+            assert cart.get_total_price() == (copybook.price * 10001 + pen.price * 800 + pencil.price * 5000)
+
     def test_buy(self, copybook, pen, pencil):
         cart = Cart()
 
@@ -108,7 +136,10 @@ class TestCart:
         cart.add_product(pen, 800)
         cart.add_product(pencil, 5000)
 
-        assert cart.buy() == {'total volume': 6300, 'copybook': 500, 'pen': 800, 'pencil': 5000}
+        cart.buy()
+
+        assert copybook.quantity == (10000 - 500) and pen.quantity == (20000 - 800) and pencil.quantity == (
+                20000 - 5000)
 
     def test_negative_buy(self, copybook, pen, pencil):
         cart = Cart()
@@ -119,3 +150,7 @@ class TestCart:
 
         with pytest.raises(ValueError):
             assert cart.buy() is ValueError
+
+    def test_product_information(self, copybook):
+        assert copybook.description == "This is a copybook"
+
