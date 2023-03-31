@@ -36,11 +36,17 @@ class TestProducts:
     def test_product_check_quantity(self, product):
         # TODO напишите проверки на метод check_quantity
         assert product.check_quantity(500)
+        assert product.check_quantity(product.quantity)
+
+        with pytest.raises(ValueError):
+            assert product.check_quantity(0) is ValueError
 
     def test_product_buy(self, product):
         # TODO напишите проверки на метод buy
         product.buy(200)
         assert 800 == product.quantity
+        product.buy(product.quantity)
+        assert 0 == product.quantity
 
     def test_product_buy_more_than_available(self, product):
         # TODO напишите проверки на метод buy,
@@ -57,7 +63,7 @@ class TestCart:
         Например, негативные тесты, ожидающие ошибку (используйте pytest.raises, чтобы проверить это)
     """
 
-    def test_add_product(self, copybook, pen, pencil):
+    def test_add_product(self, copybook, pen):
         cart = Cart()
         cart.add_product(copybook, 6)
         assert cart.products[copybook] == 6
@@ -66,14 +72,11 @@ class TestCart:
         cart.add_product(pen)
         assert cart.products[pen] == 1
 
-    def test_negative_add_product(self, copybook, pen, pencil):
+    def test_negative_add_product(self, copybook):
         cart = Cart()
 
         with pytest.raises(ValueError):
             assert cart.add_product(copybook, 0) is ValueError
-
-        with pytest.raises(ValueError):
-            assert cart.add_product(copybook, 10001) is ValueError
 
     def test_remove_product(self, copybook, pen, pencil):
         cart = Cart()
@@ -92,10 +95,10 @@ class TestCart:
         cart.remove_product(pencil, 15)
         assert pencil not in cart.products.keys()
 
-        with pytest.raises(AttributeError):
-            assert cart.remove_product(pen) is AttributeError
+        with pytest.raises(LookupError):
+            assert cart.remove_product(pen) is LookupError
 
-    def test_clear_basket(self, copybook, pen, pencil):
+    def test_clear_cart(self, copybook, pencil):
         cart = Cart()
 
         cart.add_product(copybook, 6)
@@ -114,20 +117,6 @@ class TestCart:
         cart.add_product(pencil, 5000)
 
         assert cart.get_total_price() == (copybook.price * 500 + pen.price * 800 + pencil.price * 5000)
-
-    def test_negative_total_price(self, copybook, pen, pencil):
-        cart = Cart()
-
-        try:
-            cart.add_product(copybook, 10001)
-        except ValueError:
-            pass
-
-        cart.add_product(pen, 800)
-        cart.add_product(pencil, 5000)
-
-        with pytest.raises(AssertionError):
-            assert cart.get_total_price() == (copybook.price * 10001 + pen.price * 800 + pencil.price * 5000)
 
     def test_buy(self, copybook, pen, pencil):
         cart = Cart()

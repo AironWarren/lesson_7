@@ -19,7 +19,7 @@ class Cart:
         Метод добавления продукта в корзину.
         Если продукт уже есть в корзине, то увеличиваем количество
         """
-        if quantity == 0 or product.quantity < quantity:
+        if quantity == 0:
             raise ValueError
 
         if product in self.products:
@@ -40,7 +40,7 @@ class Cart:
                 old_quantity = self.products.get(product)
                 self.products[product] = old_quantity - quantity
         else:
-            raise AttributeError
+            raise LookupError
 
     def clear(self):
         self.products.clear()
