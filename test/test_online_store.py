@@ -141,5 +141,7 @@ class TestCart:
         with pytest.raises(ValueError):
             assert cart.buy() is ValueError
 
+        assert cart.products != 0
+
     def test_product_information(self, copybooks):
         assert copybooks.description == "This is a copybook"
