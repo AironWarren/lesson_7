@@ -59,7 +59,8 @@ class Cart:
         В этом случае нужно выбросить исключение ValueError
         """
         for key, values in self.products.items():
-            if key.quantity >= values:
-                key.quantity = key.quantity - values
-            else:
+            if not key.quantity >= values:
                 raise ValueError
+
+        for key, values in self.products.items():
+            key.quantity = key.quantity - values
